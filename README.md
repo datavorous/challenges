@@ -5,11 +5,14 @@
 Inspired by [Reddit :: How I was able to fit 1.2GB of cricket data into 50MB](https://www.reddit.com/r/developersIndia/comments/1hu0w88/how_i_was_able_to_fit_12gb_of_cricket_data_into/)
 
 Original Folder Size: 2,872,200,021 bytes (~2.87 GB)  
-Custom: 42,462,177 bytes (~42.46 MB)    
+Custom: 42,462,177 bytes (~42.46 MB)  
+   
 gzip: 52,980,912 bytes (~52.98 MB) (`tar -cf - all_json | gzip -9`)  
 7z: 45,026,348 bytes (~45.02 MB) (`7z a -t7z -mx=9 -ms=on`)  
 
 Read the [writeup](compressor/README.md).
+
+[Download](https://drive.google.com/file/d/1hsmN-ljxVwv1mNC9m7Jp8tg1bRFGb-PO/view?usp=sharing) the compressed JSON files.
 
 The goal is to compress a cricket match dataset (Cricsheet JSON format) into the smallest possible representation. 
 

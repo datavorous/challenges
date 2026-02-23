@@ -31,7 +31,7 @@ JSON File Structure:
   "info": {
     "teams": ["Team A", "Team B"],
     "players": {
-      "Team A": ["Player 1", "Player 2", "...up to 32 players total"],
+      "Team A": ["Player 1", "Player 2", "..."],
       "Team B": ["Player 3", "Player 4", "..."]
     }
   },
