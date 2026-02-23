@@ -10,6 +10,12 @@ Custom: 42,462,177 bytes (~42.46 MB)
 gzip: 52,980,912 bytes (~52.98 MB) (`tar -cf - all_json | gzip -9`)  
 7z: 45,026,348 bytes (~45.02 MB) (`7z a -t7z -mx=9 -ms=on`)  
 
+Custom + 7z: 8.9MB (!)  
+
+The entropy of the final file is 7.999980 bits/byte which means there is virtually no redundant structure left!
+
+![entropy](compressor/media/entropy.png)
+
 Read the [writeup](compressor/README.md).
 
 [Download](https://drive.google.com/file/d/1hsmN-ljxVwv1mNC9m7Jp8tg1bRFGb-PO/view?usp=sharing) the compressed JSON files.
