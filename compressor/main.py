@@ -27,10 +27,16 @@ def compress(json_path, out_path):
         inning_team = inning["team"]
         inning_team_idx = team_idx[inning_team]
 
-        over_delivery_counts = []
+        # over_delivery_counts = []
+        over_entries = []
         for over in overs:
             over_deliveries = over["deliveries"]
-            over_delivery_counts.append(len(over_deliveries))
+            # over_delivery_counts.append(len(over_deliveries))
+            bowler_name = over_deliveries[0]["bowler"]
+            over_entries.append({
+                "bowler_index": player_idx[bowler_name],
+                "deliveries_index": len(over_deliveries),
+            })
             for d in over_deliveries:
                 b = player_idx[d["batter"]]
                 bw = player_idx[d["bowler"]]
@@ -38,7 +44,7 @@ def compress(json_path, out_path):
                 runs = d["runs"]["batter"]
                 extras = 1 if d["runs"]["extras"] else 0
                 has_wicket = 1 if "wickets" in d else 0
-                val = (b << 15) | (bw << 10) | (ns << 5) | (runs << 2) | (extras << 1) | has_wicket
+                val = (b << 10) | (ns << 5) | (runs << 2) | (extras << 1) | has_wicket
 
                 delivery_bits.append(val)
                 wicket_bits.append(has_wicket)
@@ -59,7 +65,8 @@ def compress(json_path, out_path):
         innings_layout.append(
             {
                 "team_index": inning_team_idx,
-                "over_delivery_counts": over_delivery_counts,
+                # "over_delivery_counts": over_delivery_counts,
+                "overs": over_entries,
             }
         )
 
@@ -78,12 +85,16 @@ def compress(json_path, out_path):
         f.write(struct.pack(">B", len(innings_layout)))
         for inning in innings_layout:
             f.write(struct.pack(">B", inning["team_index"]))
-            f.write(struct.pack(">B", len(inning["over_delivery_counts"])))
-            for n_deliveries in inning["over_delivery_counts"]:
-                f.write(struct.pack(">B", n_deliveries))
+            # f.write(struct.pack(">B", len(inning["over_delivery_counts"])))
+            # for n_deliveries in inning["over_delivery_counts"]:
+                # f.write(struct.pack(">B", n_deliveries))
+            f.write(struct.pack(">B", len(inning["overs"])))
+            for over in inning["overs"]:
+                f.write(struct.pack(">B", over["bowler_index"]))
+                f.write(struct.pack(">B", over["deliveries_index"]))
 
         for val in delivery_bits:
-            f.write(val.to_bytes(3, "big"))
+            f.write(val.to_bytes(2, "big"))
 
         n = len(wicket_bits)
         for i in range(0, n, 8):
@@ -131,34 +142,46 @@ def decompress(in_path):
         num_overs = data[offset]
         offset += 1
 
-        over_delivery_counts = list(data[offset:offset + num_overs])
-        offset += num_overs
+        # over_delivery_counts = list(data[offset:offset + num_overs])
+        # offset += num_overs
+
+        overs = []
+        for _ in range(num_overs):
+            bowler_index = data[offset]
+            offset += 1
+            deliveries_index = data[offset]
+            offset += 1
+            overs.append({
+                "bowler_index": bowler_index,
+                "deliveries_index": deliveries_index,
+            })
 
         innings_layout.append(
             {
                 "team_index": team_index,
-                "over_delivery_counts": over_delivery_counts,
+                # "over_delivery_counts": over_delivery_counts,
+                "overs": overs,
             }
         )
 
     deliveries = []
     for _ in range(num_deliveries):
-        val = int.from_bytes(data[offset:offset + 3], "big")
-        offset += 3
+        val = int.from_bytes(data[offset:offset + 2], "big")
+        offset += 2
 
         batter_runs = (val >> 2) & 0x7
         extras = (val >> 1) & 0x1
         deliveries.append(
             {
-                "batter": players[(val >> 15) & 0x1F],
-                "bowler": players[(val >> 10) & 0x1F],
+                "batter": players[(val >> 10) & 0x1F], # players[(val >> 15) & 0x1F],
+                "bowler": None, # players[(val >> 10) & 0x1F],
                 "non_striker": players[(val >> 5) & 0x1F],
                 "runs": {
                     "batter": batter_runs,
                     "extras": extras,
                     "total": batter_runs + extras,
                 },
-                "has_wicket": val & 0x1,
+                "has_wicket": val & 0x1
             }
         )
 
@@ -195,8 +218,13 @@ def decompress(in_path):
     delivery_cursor = 0
     for inning in innings_layout:
         overs = []
-        for over_no, count in enumerate(inning["over_delivery_counts"]):
+        for over_no, over in enumerate(inning["overs"]):
+            bowler_name = players[over["bowler_index"]]
+            count = over["deliveries_index"]
+
             over_deliveries = deliveries[delivery_cursor:delivery_cursor + count]
+            for d in over_deliveries:
+                d["bowler"] = bowler_name
             overs.append({"over": over_no, "deliveries": over_deliveries})
             delivery_cursor += count
         innings.append({"team": teams[inning["team_index"]], "overs": overs})
@@ -219,4 +247,4 @@ if sys.argv[1] == "compress":
     compress(sys.argv[2], sys.argv[3])
 elif sys.argv[1] == "decompress":
     result = decompress(sys.argv[2])
-    print(json.dumps(result, indent=4))
+    print(json.dumps(result, indent=2))

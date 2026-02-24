@@ -6,7 +6,7 @@ all_json/
 all_json_max.tar.gz
 all_json_ultra.7z
 compressed_json/
-
+compressed_json2/
 .DS_Store
 Thumbs.db
 *.log

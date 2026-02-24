@@ -1,5 +1,7 @@
 # Reasoning
 
+## Structural 
+
 ### [METADATA]
 
 The file begins by storing metadata at the top. The objective is to use the "players" names to create a lookup index. Since there are a total of 22 players, each name is mapped to an ID from 0 to 21.
@@ -8,9 +10,15 @@ The file begins by storing metadata at the top. The objective is to use the "pla
 
 Most deliveries follow a standard pattern. 
 
-For the batter, bowler, and non striker, the maximum ID is 21, so 5 bits are allocated for each since 2^5 = 32. For runs, the maximum is usually 6, so 3 bits. One additional bit is used as a flag to signal a wicket. 
+For the batter and non striker, the maximum ID is 21, so 5 bits are allocated for each since 2^5 = 32. For runs, the maximum is usually 6, so 3 bits. One additional bit is used as a flag to signal a wicket.
 
-This creates a stride length of 24 bits per delivery. To access any specific delivery information, a simple calculation of `n * stride_length + offset` is enough.
+This creates a stride length of 16 bits per delivery. To access any specific delivery information, a simple calculation of `n * stride_length + offset` is enough.
+
+### [OVER HEADERS]
+
+Cricket law guarantees that one bowler bowls all deliveries in a given over. Rather than storing the bowler ID redundantly on every delivery (5 bits × ~6 deliveries), the bowler is hoisted into the over header and stored once per over. 
+
+This is an example of encoding a domain invariant directly into the binary layout; the format physically cannot represent a delivery with a different bowler mid-over. Each over header stores: `bowler_index (1 byte) + delivery_count (1 byte)`.
 
 ### [WICKETS]
 
